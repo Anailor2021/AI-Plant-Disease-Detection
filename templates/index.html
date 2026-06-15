@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CropScan AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green-dark: #1a4a1a;
+    --green-mid: #2d6a2d;
+    --green-light: #4a9e4a;
+    --green-pale: #e8f5e8;
+    --green-accent: #63c463;
+    --amber: #f0a500;
+    --amber-pale: #fff8e6;
+    --gray-100: #f8f9f7;
+    --gray-200: #eef0ec;
+    --gray-400: #9aa89a;
+    --gray-600: #5a6a5a;
+    --gray-900: #1a1e1a;
+    --white: #ffffff;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--green-dark);
+  }
+
+  .nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green-light);
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--green-dark);
+    margin-bottom: 0.5rem;
+  }
+
+  .hero p {
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .upload-box {
+    border: 2px dashed #b8d4b8;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: var(--white);
+    margin-bottom: 2rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .upload-box:hover {
+    border-color: var(--green-light);
+    background: var(--green-pale);
+  }
+
+  .upload-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+  }
+
+  .upload-icon-wrap svg {
+    width: 24px;
+    height: 24px;
+    stroke: var(--green-mid);
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .upload-box h3 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+  }
+
+  .upload-box p {
+    font-size: 0.85rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+  }
+
+  .btn-upload {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gray-900);
+    cursor: pointer;
+    margin-right: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-camera {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 8px;
+    border: 1px solid var(--green-light);
+    background: var(--green-pale);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--green-dark);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  #file-input { display: none; }
+
+  .preview-section { display: none; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 14px;
+    border: 1px solid var(--gray-200);
+    padding: 1.25rem;
+  }
+
+  .card-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray-400);
+    margin-bottom: 0.75rem;
+  }
+
+  .card img {
+    width: 100%;
+    border-radius: 10px;
+    display: block;
+  }
+
+  .gradcam-note {
+    font-size: 0.7rem;
+    color: var(--gray-400);
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    margin: 1.5rem 0;
+  }
+
+  .disease-name {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.2rem;
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 99px;
+    margin-bottom: 1rem;
+  }
+
+  .badge-warn { background: var(--amber-pale); color: #8a5c00; }
+  .badge-ok { background: var(--green-pale); color: var(--green-dark); }
+
+  .conf-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    margin-bottom: 4px;
+  }
+
+  .conf-val { font-weight: 600; color: var(--green-mid); }
+
+  .bar-bg {
+    height: 6px;
+    border-radius: 99px;
+    background: var(--gray-200);
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--green-light), var(--green-accent));
+  }
+
+  .section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 0.75rem;
+  }
+
+  .pred-row {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .pred-row:last-child { border-bottom: none; }
+
+  .pred-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+
+  .pred-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pred-rank {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    color: var(--green-dark);
+    font-size: 0.65rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pred-name { font-size: 0.85rem; color: var(--gray-900); }
+  .pred-conf-high { font-size: 0.85rem; font-weight: 600; color: var(--green-mid); }
+  .pred-conf-low { font-size: 0.85rem; font-weight: 500; color: var(--gray-400); }
+
+  .pred-bar-bg {
+    height: 4px;
+    background: var(--gray-200);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .pred-bar { height: 100%; border-radius: 99px; background: var(--green-light); }
+
+  .treatment-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+  }
+
+  .treatment-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--green-pale);
+    color: var(--green-dark);
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .disclaimer {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border-left: 3px solid var(--amber);
+    background: var(--amber-pale);
+    font-size: 0.75rem;
+    color: #7a5200;
+    line-height: 1.5;
+    margin-top: 1rem;
+  }
+
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    color: var(--gray-600);
+    font-size: 0.9rem;
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--green-light);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 0.75rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Camera modal */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal.active { display: flex; }
+
+  .modal-box {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 480px;
+    text-align: center;
+  }
+
+  .modal-box h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--green-dark);
+  }
+
+  .modal-box video {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .modal-box canvas { display: none; }
+
+  .btn-capture {
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--green-mid);
+    color: var(--white);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-close {
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <div class="nav-dot"></div>
+    CropScan AI
+  </div>
+</nav>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>🌿 CropScan AI</h1>
+    <p>Upload a photo of a plant leaf or take one with your camera to instantly detect diseases and get treatment advice.</p>
+  </div>
+
+  <form id="upload-form" enctype="multipart/form-data">
+    <input type="file" id="file-input" name="image" accept="image/*">
+    <div class="upload-box" id="upload-box">
+      <div class="upload-icon-wrap">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+        </svg>
+      </div>
+      <h3>Drag and drop a leaf photo here</h3>
+      <p>Supports JPG, JPEG, PNG</p>
+      <button type="button" class="btn-upload" onclick="document.getElementById('file-input').click()">Choose file</button>
+      <button type="button" class="btn-camera" onclick="openCamera()">📷 Use camera</button>
+    </div>
+  </form>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Analyzing leaf...
+  </div>
+
+  <div class="preview-section" id="results">
+
+    <div class="results-grid">
+      <div class="card">
+        <div class="card-label">Uploaded image</div>
+        <img id="original-img" src="" alt="Original">
+      </div>
+      <div class="card">
+        <div class="card-label">Grad-CAM — what the AI focused on</div>
+        <img id="gradcam-img" src="" alt="Grad-CAM">
+        <div class="gradcam-note">Highlighted regions show what the AI focused on</div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-label">Detection result</div>
+      <div class="disease-name" id="disease-name"></div>
+      <span class="badge" id="severity-badge"></span>
+      <div class="conf-row">
+        <span>Confidence</span>
+        <span class="conf-val" id="conf-val"></span>
+      </div>
+      <div class="bar-bg">
+        <div class="bar-fill" id="conf-bar"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="section-title">Top 3 Predictions</div>
+      <div id="predictions-list"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="section-title">🌱 Treatment Recommendations</div>
+      <div id="treatment-list"></div>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ This tool is for guidance only. Always verify results with a qualified agricultural expert. CropScan AI was trained on lab-condition images and may perform differently in real-world field conditions. Confidence below 75% should always be verified by a professional.
+    </div>
+
+  </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal" id="camera-modal">
+  <div class="modal-box">
+    <h3>📷 Take a photo of the leaf</h3>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <br>
+    <button class="btn-capture" onclick="capturePhoto()">Capture</button>
+    <button class="btn-close" onclick="closeCamera()">Cancel</button>
+  </div>
+</div>
+
+<script>
+  const fileInput = document.getElementById('file-input');
+  const uploadBox = document.getElementById('upload-box');
+
+  // Drag and drop
+  uploadBox.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadBox.style.borderColor = '#4a9e4a';
+    uploadBox.style.background = '#e8f5e8';
+  });
+
+  uploadBox.addEventListener('dragleave', () => {
+    uploadBox.style.borderColor = '#b8d4b8';
+    uploadBox.style.background = '#ffffff';
+  });
+
+  uploadBox.addEventListener('drop', e => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) processFile(fileInput.files[0]);
+  });
+
+  function processFile(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('original-img').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+
+    fetch('/predict', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+        showResults(data);
+      })
+      .catch(() => {
+        document.getElementById('loading').style.display = 'none';
+        alert('Error analyzing image. Please try again.');
+      });
+  }
+
+  function showResults(data) {
+    document.getElementById('disease-name').textContent = data.disease;
+    document.getElementById('conf-val').textContent = data.confidence + '%';
+    document.getElementById('conf-bar').style.width = data.confidence + '%';
+
+    const badge = document.getElementById('severity-badge');
+    if (data.confidence >= 75) {
+      badge.textContent = data.confidence >= 85 ? 'High severity' : 'Moderate severity';
+      badge.className = 'badge badge-warn';
+    } else {
+      badge.textContent = 'Low confidence — verify with expert';
+      badge.className = 'badge badge-ok';
+    }
+
+    if (data.gradcam) {
+      document.getElementById('gradcam-img').src = 'data:image/jpeg;base64,' + data.gradcam;
+    }
+
+    const predList = document.getElementById('predictions-list');
+    predList.innerHTML = '';
+    data.predictions.forEach((p, i) => {
+      const isTop = i === 0;
+      predList.innerHTML += `
+        <div class="pred-row">
+          <div class="pred-top">
+            <div class="pred-left">
+              <div class="pred-rank">${i+1}</div>
+              <span class="pred-name">${p.name}</span>
+            </div>
+            <span class="${isTop ? 'pred-conf-high' : 'pred-conf-low'}">${p.confidence}%</span>
+          </div>
+          <div class="pred-bar-bg">
+            <div class="pred-bar" style="width:${p.confidence}%;${!isTop ? 'background:#9aa89a' : ''}"></div>
+          </div>
+        </div>`;
+    });
+
+    const treatList = document.getElementById('treatment-list');
+    treatList.innerHTML = '';
+    data.treatment.forEach((t, i) => {
+      treatList.innerHTML += `
+        <div class="treatment-item">
+          <div class="treatment-num">${i+1}</div>
+          <span>${t}</span>
+        </div>`;
+    });
+
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Camera
+  let stream = null;
+
+  function openCamera() {
+    document.getElementById('camera-modal').classList.add('active');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+      .then(s => {
+        stream = s;
+        document.getElementById('video').srcObject = s;
+      });
+  }
+
+  function capturePhoto() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    closeCamera();
+    canvas.toBlob(blob => processFile(blob));
+  }
+
+  function closeCamera() {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    document.getElementById('camera-modal').classList.remove('active');
+  }
+</script>
+</body>
+</html>
